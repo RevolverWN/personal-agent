@@ -1,0 +1,141 @@
+"""SQLAlchemy database models and utilities."""
+
+from datetime import datetime, timezone
+from typing import AsyncGenerator
+from sqlalchemy import String, Text, Integer, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+
+from app.config import settings
+
+
+class Base(DeclarativeBase):
+    """Base class for all models."""
+    pass
+
+
+class User(Base):
+    """User model."""
+    __tablename__ = "users"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+    
+    # Relationships
+    conversations: Mapped[list["Conversation"]] = relationship(
+        "Conversation", back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class Conversation(Base):
+    """Conversation model."""
+    __tablename__ = "conversations"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    title: Mapped[str] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+    
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="conversations")
+    messages: Mapped[list["Message"]] = relationship(
+        "Message", back_populates="conversation", cascade="all, delete-orphan"
+    )
+
+
+class Message(Base):
+    """Chat message model."""
+    __tablename__ = "messages"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    conversation_id: Mapped[str] = mapped_column(String(36), ForeignKey("conversations.id"))
+    role: Mapped[str] = mapped_column(String(20))  # system, user, assistant
+    content: Mapped[str] = mapped_column(Text)
+    model: Mapped[str] = mapped_column(String(50), nullable=True)
+    tokens_used: Mapped[int] = mapped_column(Integer, nullable=True)
+    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    
+    # Relationships
+    conversation: Mapped["Conversation"] = relationship(
+        "Conversation", back_populates="messages"
+    )
+
+
+class AgentConfiguration(Base):
+    """Agent configuration model."""
+    __tablename__ = "agent_configurations"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True)
+    model: Mapped[str] = mapped_column(String(50), default="gpt-4o-mini")
+    temperature: Mapped[float] = mapped_column(default=0.7)
+    max_tokens: Mapped[int] = mapped_column(default=4096)
+    system_prompt: Mapped[str] = mapped_column(Text, nullable=True)
+    enable_tools: Mapped[list] = mapped_column(JSON, default=list)
+    enable_memory: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+
+class FileStorage(Base):
+    """File storage model."""
+    __tablename__ = "files"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    filename: Mapped[str] = mapped_column(String(255))
+    file_path: Mapped[str] = mapped_column(String(500))
+    size: Mapped[int] = mapped_column(Integer)
+    content_type: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
+# Database engine and session
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=settings.DEBUG,
+)
+
+async_session_maker = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Get database session."""
+    async with async_session_maker() as session:
+        yield session
+
+
+async def init_db() -> None:
+    """Initialize database tables."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
