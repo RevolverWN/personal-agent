@@ -1,27 +1,12 @@
 import MessageItem from './MessageItem'
-
-interface ToolCall {
-  tool: string
-  arguments: Record<string, any>
-  result: {
-    success: boolean
-    data: any
-    error?: string
-  }
-}
-
-interface Message {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  timestamp?: string
-  tool_calls?: ToolCall[]
-}
+import type { Message } from '../../stores/chatStore'
 
 interface MessageListProps {
   messages: Message[]
+  streamingMessageId?: string | null
 }
 
-export default function MessageList({ messages }: MessageListProps) {
+export default function MessageList({ messages, streamingMessageId }: MessageListProps) {
   if (messages.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
@@ -31,10 +16,10 @@ export default function MessageList({ messages }: MessageListProps) {
           <div className="mt-6 text-xs text-gray-400">
             <p>Try asking:</p>
             <ul className="mt-2 space-y-1">
-              <li>"Search for the latest AI news"</li>
-              <li>"Calculate 15 * 23 + 100"</li>
-              <li>"What time is it now?"</li>
-              <li>"Execute: print('Hello World')"</li>
+              <li>&quot;Search for the latest AI news&quot;</li>
+              <li>&quot;Calculate 15 * 23 + 100&quot;</li>
+              <li>&quot;What time is it now?&quot;</li>
+              <li>&quot;Execute: print(&apos;Hello World&apos;)&quot;</li>
             </ul>
           </div>
         </div>
@@ -44,13 +29,19 @@ export default function MessageList({ messages }: MessageListProps) {
 
   return (
     <div className="space-y-4">
-      {messages.map((message, index) => (
+      {messages.map((message) => (
         <MessageItem
-          key={index}
-          role={message.role}
+          key={message.id}
+          role={message.role === 'tool' ? 'assistant' : message.role}
           content={message.content}
           timestamp={message.timestamp}
-          toolCalls={message.tool_calls}
+          toolCalls={message.toolCalls?.map(tc => ({
+            tool: tc.name,
+            arguments: tc.arguments,
+            result: tc.result as { success: boolean; data: unknown; error?: string }
+          }))}
+          isStreaming={message.id === streamingMessageId}
+          model={message.model}
         />
       ))}
     </div>

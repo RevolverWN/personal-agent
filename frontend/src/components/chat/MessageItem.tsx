@@ -1,16 +1,17 @@
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { UserIcon, CpuIcon } from '@heroicons/react/24/solid'
+import { UserIcon } from '@heroicons/react/24/solid'
+import { CpuChipIcon } from '@heroicons/react/24/outline'
 import { format } from 'date-fns'
 import ToolCallDisplay from './ToolCallDisplay'
 
 interface ToolCall {
   tool: string
-  arguments: Record<string, any>
+  arguments: Record<string, unknown>
   result: {
     success: boolean
-    data: any
+    data: unknown
     error?: string
   }
 }
@@ -18,11 +19,20 @@ interface ToolCall {
 interface MessageItemProps {
   role: 'user' | 'assistant' | 'system'
   content: string
-  timestamp?: string
+  timestamp?: Date | string
   toolCalls?: ToolCall[]
+  isStreaming?: boolean
+  model?: string
 }
 
-export default function MessageItem({ role, content, timestamp, toolCalls }: MessageItemProps) {
+export default function MessageItem({ 
+  role, 
+  content, 
+  timestamp, 
+  toolCalls, 
+  isStreaming,
+  model 
+}: MessageItemProps) {
   const isUser = role === 'user'
 
   return (
@@ -37,7 +47,7 @@ export default function MessageItem({ role, content, timestamp, toolCalls }: Mes
           {isUser ? (
             <UserIcon className="w-5 h-5 text-white" />
           ) : (
-            <CpuIcon className="w-5 h-5 text-gray-600" />
+            <CpuChipIcon className="w-5 h-5 text-gray-600" />
           )}
         </div>
 
@@ -56,7 +66,7 @@ export default function MessageItem({ role, content, timestamp, toolCalls }: Mes
               <div className="prose prose-sm max-w-none dark:prose-invert">
                 <ReactMarkdown
                   components={{
-                    code({ node, inline, className, children, ...props }: any) {
+                    code({ inline, className, children, ...props }: { inline?: boolean; className?: string; children?: React.ReactNode }) {
                       const match = /language-(\w+)/.exec(className || '')
                       return !inline && match ? (
                         <SyntaxHighlighter
@@ -80,16 +90,26 @@ export default function MessageItem({ role, content, timestamp, toolCalls }: Mes
               </div>
             )}
 
-            {/* Timestamp */}
-            {timestamp && (
-              <p
-                className={`text-xs mt-2 ${
-                  isUser ? 'text-primary-200' : 'text-gray-500'
-                }`}
-              >
-                {format(new Date(timestamp), 'h:mm a')}
-              </p>
+            {/* Streaming Indicator */}
+            {isStreaming && !isUser && (
+              <span className="inline-flex items-center ml-2">
+                <span className="animate-pulse text-gray-400">▊</span>
+              </span>
             )}
+
+            {/* Timestamp & Model Info */}
+            <div className={`flex items-center gap-2 mt-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+              {timestamp && (
+                <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-500'}`}>
+                  {format(new Date(timestamp), 'h:mm a')}
+                </span>
+              )}
+              {model && !isUser && (
+                <span className="text-xs text-gray-400">
+                  · {model}
+                </span>
+              )}
+            </div>
           </div>
           
           {/* Tool Calls Display */}

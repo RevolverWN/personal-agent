@@ -1,159 +1,172 @@
-import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
-import { api } from '../../services/api'
+import { useEffect, useRef } from 'react'
+import { useWebSocket, type WebSocketMessage } from '../../hooks/useWebSocket'
+import { useChatStore } from '../../stores/chatStore'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
-
-interface ToolCall {
-  tool: string
-  arguments: Record<string, any>
-  result: {
-    success: boolean
-    data: any
-    error?: string
-  }
-}
-
-interface Message {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  timestamp?: string
-  tool_calls?: ToolCall[]
-}
+import { v4 as uuidv4 } from 'uuid'
+import type { UploadedFile } from './FileUpload'
 
 interface ChatWindowProps {
   conversationId: string
 }
 
 export default function ChatWindow({ conversationId }: ChatWindowProps) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  const {
+    messages,
+    isStreaming,
+    streamingMessageId,
+    loadMessages,
+    addMessage,
+    startStreaming,
+    stopStreaming,
+    appendToStreamingMessage,
+  } = useChatStore()
 
+  // Auto-scroll to bottom
   useEffect(() => {
-    loadMessages()
-  }, [conversationId])
-
-  useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const loadMessages = async () => {
-    try {
-      const response = await api.get(`/chat/conversations/${conversationId}/messages`)
-      setMessages(response.data)
-    } catch (error) {
-      console.error('Failed to load messages:', error)
+  // Load messages when conversation changes
+  useEffect(() => {
+    loadMessages(conversationId)
+  }, [conversationId, loadMessages])
+
+  // Handle WebSocket messages
+  const handleWebSocketMessage = (wsMessage: WebSocketMessage) => {
+    switch (wsMessage.type) {
+      case 'connected':
+        console.log('WebSocket connected:', wsMessage.client_id)
+        break
+        
+      case 'ack':
+        // Server acknowledged our message
+        console.log('Message acknowledged:', wsMessage.message_id)
+        break
+        
+      case 'stream_chunk':
+        // Append streaming content
+        appendToStreamingMessage(wsMessage.content as string)
+        break
+        
+      case 'stream_end':
+        // Streaming finished
+        stopStreaming()
+        break
+        
+      case 'response':
+        // Non-streaming response
+        addMessage({
+          id: uuidv4(),
+          role: 'assistant',
+          content: wsMessage.content as string,
+          timestamp: new Date(),
+          model: wsMessage.model as string,
+          tokensUsed: wsMessage.tokens_used as number,
+        })
+        break
+        
+      case 'error':
+        console.error('WebSocket error:', wsMessage.message)
+        stopStreaming()
+        addMessage({
+          id: uuidv4(),
+          role: 'assistant',
+          content: `Error: ${wsMessage.message}`,
+          timestamp: new Date(),
+          error: wsMessage.message as string,
+        })
+        break
     }
   }
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  // WebSocket connection
+  const { isConnected, isConnecting, sendMessage } = useWebSocket({
+    conversationId,
+    onMessage: handleWebSocketMessage,
+    onConnect: () => console.log('WebSocket connected'),
+    onDisconnect: () => console.log('WebSocket disconnected'),
+    onError: (error) => console.error('WebSocket error:', error),
+  })
 
-  const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return
+  const handleSendMessage = async (content: string, _files?: UploadedFile[]) => {
+    if (!content.trim() || !isConnected) return
 
-    // Add user message
-    const userMessage: Message = {
+    // Add user message to UI
+    const userMessageId = uuidv4()
+    addMessage({
+      id: userMessageId,
       role: 'user',
       content,
-      timestamp: new Date().toISOString(),
-    }
-    setMessages((prev) => [...prev, userMessage])
-    setIsLoading(true)
+      timestamp: new Date(),
+    })
 
-    try {
-      // Use streaming
-      const response = await fetch(
-        `${api.defaults.baseURL}/chat/completions`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': api.defaults.headers.common['Authorization'] as string,
-          },
-          body: JSON.stringify({
-            message: content,
-            conversation_id: conversationId,
-            stream: true,
-          }),
-        }
-      )
+    // Create assistant message placeholder
+    const assistantMessageId = uuidv4()
+    addMessage({
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true,
+    })
 
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      let assistantContent = ''
+    // Start streaming
+    startStreaming(assistantMessageId)
 
-      // Add placeholder for assistant message
-      const assistantMessage: Message = {
+    // Send via WebSocket
+    const sent = sendMessage({
+      type: 'chat',
+      message: content,
+      conversation_id: conversationId,
+      stream: true,
+    })
+
+    if (!sent) {
+      stopStreaming()
+      addMessage({
+        id: uuidv4(),
         role: 'assistant',
-        content: '',
-        timestamp: new Date().toISOString(),
-      }
-      setMessages((prev) => [...prev, assistantMessage])
-
-      while (reader) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') continue
-            
-            try {
-              const parsed = JSON.parse(data)
-              if (parsed.type === 'content') {
-                assistantContent += parsed.content
-                setMessages((prev) => {
-                  const newMessages = [...prev]
-                  const lastMessage = newMessages[newMessages.length - 1]
-                  if (lastMessage.role === 'assistant') {
-                    lastMessage.content = assistantContent
-                  }
-                  return newMessages
-                })
-              }
-            } catch (e) {
-              // Ignore parse errors
-            }
-          }
-        }
-      }
-      
-      // Reload messages to get tool calls
-      await loadMessages()
-      
-    } catch (error) {
-      console.error('Failed to send message:', error)
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
-          timestamp: new Date().toISOString(),
-        },
-      ])
-    } finally {
-      setIsLoading(false)
+        content: 'Failed to send message. Please check your connection.',
+        timestamp: new Date(),
+        error: 'Send failed',
+      })
     }
   }
 
   return (
     <div className="flex flex-col h-full">
+      {/* Connection Status */}
+      {isConnecting && (
+        <div className="bg-yellow-50 text-yellow-700 px-4 py-1 text-sm text-center">
+          Connecting...
+        </div>
+      )}
+      {!isConnected && !isConnecting && (
+        <div className="bg-red-50 text-red-700 px-4 py-1 text-sm text-center">
+          Disconnected. Messages will not be sent.
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
-        <MessageList messages={messages} />
+        <MessageList 
+          messages={messages} 
+          streamingMessageId={streamingMessageId} 
+        />
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
       <div className="border-t border-gray-200 p-4 bg-white">
-        <MessageInput onSend={handleSendMessage} isLoading={isLoading} />
+        <MessageInput 
+          onSend={handleSendMessage} 
+          isLoading={isStreaming}
+          disabled={!isConnected}
+          placeholder={isConnected ? 'Type a message...' : 'Waiting for connection...'}
+        />
       </div>
     </div>
   )

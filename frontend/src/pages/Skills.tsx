@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
-import { BoltIcon, PlayIcon } from '@heroicons/react/24/outline'
+import { BoltIcon } from '@heroicons/react/24/outline'
 
 interface Skill {
   name: string
@@ -14,7 +14,7 @@ export default function Skills() {
   const [skills, setSkills] = useState<Skill[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null)
-  const [actionResult, setActionResult] = useState<any>(null)
+  const [actionResult,] = useState<Record<string, unknown> | null>(null)
 
   useEffect(() => {
     loadSkills()
@@ -31,16 +31,8 @@ export default function Skills() {
     }
   }
 
-  const executeAction = async (skillName: string, action: string, params: any) => {
-    try {
-      const response = await api.post(`/skills/${skillName}/execute`, null, {
-        params: { action, params: JSON.stringify(params) }
-      })
-      setActionResult(response.data)
-    } catch (error) {
-      console.error('Action failed:', error)
-    }
-  }
+  // executeAction reserved for future use
+  // const executeAction = async (skillName: string, action: string, params: unknown) => {
 
   if (isLoading) {
     return <div className="text-center py-12">Loading skills...</div>

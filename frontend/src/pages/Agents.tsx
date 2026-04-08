@@ -4,10 +4,8 @@ import { format } from 'date-fns'
 import {
   PlusIcon,
   TrashIcon,
-  DocumentDuplicateIcon,
   UsersIcon,
   SparklesIcon,
-  Cog6ToothIcon,
 } from '@heroicons/react/24/outline'
 
 interface AgentRole {
@@ -48,7 +46,7 @@ export default function Agents() {
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showCollaborateModal, setShowCollaborateModal] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<AgentRole | null>(null)
+  const [,] = useState<AgentRole | null>(null)
   const [newAgent, setNewAgent] = useState({
     name: '',
     description: '',
