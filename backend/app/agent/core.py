@@ -1,11 +1,12 @@
 """Agent core implementation using LiteLLM for multi-model support."""
 
 from typing import AsyncGenerator, List, Dict, Any, Optional
+import json
 import litellm
 from litellm import acompletion
 
 from app.config import settings
-from app.agent.tools import ToolManager
+from app.tools.manager import tool_manager
 
 
 class AgentCore:
@@ -13,26 +14,15 @@ class AgentCore:
     
     def __init__(self):
         """Initialize the agent."""
-        self.tool_manager = ToolManager()
         self._setup_api_keys()
     
     def _setup_api_keys(self):
         """Setup API keys for different providers."""
         if settings.OPENAI_API_KEY:
             litellm.api_key = settings.OPENAI_API_KEY
-        
-        # Set other API keys in environment or litellm params
-        self.provider_keys = {
-            "openai": settings.OPENAI_API_KEY,
-            "anthropic": settings.ANTHROPIC_API_KEY,
-            "deepseek": settings.DEEPSEEK_API_KEY,
-            "moonshot": settings.MOONSHOT_API_KEY,
-            "openrouter": settings.OPENROUTER_API_KEY,
-        }
     
     def _get_model_name(self, model: str) -> str:
         """Convert model ID to LiteLLM format."""
-        # Map model IDs to LiteLLM format
         model_map = {
             "gpt-4o": "gpt-4o",
             "gpt-4o-mini": "gpt-4o-mini",
@@ -52,8 +42,6 @@ class AgentCore:
             return settings.DEEPSEEK_API_KEY
         elif "moonshot" in model:
             return settings.MOONSHOT_API_KEY
-        elif "openrouter" in model:
-            return settings.OPENROUTER_API_KEY
         else:
             return settings.OPENAI_API_KEY
     
@@ -63,9 +51,10 @@ class AgentCore:
         model: str = None,
         temperature: float = 0.7,
         history: List[Dict[str, str]] = None,
-        system_prompt: str = None
-    ) -> str:
-        """Send a chat message and get response."""
+        system_prompt: str = None,
+        enable_tools: bool = True
+    ) -> Dict[str, Any]:
+        """Send a chat message and get response with optional tool support."""
         model = model or settings.DEFAULT_MODEL
         model_name = self._get_model_name(model)
         api_key = self._get_api_key(model)
@@ -80,19 +69,56 @@ class AgentCore:
         
         messages.append({"role": "user", "content": message})
         
-        # Make request
+        # Get available tools
+        tools = tool_manager.get_all_schemas() if enable_tools else None
+        
         try:
+            # Make request
             response = await acompletion(
                 model=model_name,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=settings.DEFAULT_MAX_TOKENS,
-                api_key=api_key
+                api_key=api_key,
+                tools=tools if tools else None
             )
             
-            return response.choices[0].message.content
+            message_response = response.choices[0].message
+            content = message_response.content or ""
+            
+            # Check for tool calls
+            tool_calls = []
+            if hasattr(message_response, 'tool_calls') and message_response.tool_calls:
+                for tool_call in message_response.tool_calls:
+                    # Execute tool
+                    result = await tool_manager.execute_tool(
+                        tool_call.function.name,
+                        tool_call.function.arguments
+                    )
+                    
+                    tool_calls.append({
+                        "tool": tool_call.function.name,
+                        "arguments": json.loads(tool_call.function.arguments),
+                        "result": result.to_dict()
+                    })
+                    
+                    # If tool execution was successful, we could continue the conversation
+                    # For now, just return the tool results
+            
+            return {
+                "content": content,
+                "tool_calls": tool_calls,
+                "model": model,
+                "usage": response.usage.dict() if response.usage else None
+            }
+            
         except Exception as e:
-            return f"Error: {str(e)}"
+            return {
+                "content": f"Error: {str(e)}",
+                "tool_calls": [],
+                "model": model,
+                "usage": None
+            }
     
     async def chat_stream(
         self,
@@ -100,7 +126,8 @@ class AgentCore:
         model: str = None,
         temperature: float = 0.7,
         history: List[Dict[str, str]] = None,
-        system_prompt: str = None
+        system_prompt: str = None,
+        enable_tools: bool = False  # Disable tools for streaming
     ) -> AsyncGenerator[str, None]:
         """Send a chat message and get streaming response."""
         model = model or settings.DEFAULT_MODEL
@@ -117,7 +144,6 @@ class AgentCore:
         
         messages.append({"role": "user", "content": message})
         
-        # Make streaming request
         try:
             response = await acompletion(
                 model=model_name,
@@ -131,70 +157,19 @@ class AgentCore:
             async for chunk in response:
                 if chunk.choices and chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
+                    
         except Exception as e:
             yield f"Error: {str(e)}"
     
-    async def chat_with_tools(
+    async def execute_tool_directly(
         self,
-        message: str,
-        tools: List[str],
-        model: str = None,
-        temperature: float = 0.7,
-        history: List[Dict[str, str]] = None
+        tool_name: str,
+        arguments: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Send a chat message with tool support."""
-        model = model or settings.DEFAULT_MODEL
-        model_name = self._get_model_name(model)
-        api_key = self._get_api_key(model)
-        
-        # Get tool definitions
-        tool_definitions = self.tool_manager.get_tool_definitions(tools)
-        
-        # Build messages
-        messages = []
-        if history:
-            messages.extend(history)
-        
-        messages.append({"role": "user", "content": message})
-        
-        # Make request with tools
-        try:
-            response = await acompletion(
-                model=model_name,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=settings.DEFAULT_MAX_TOKENS,
-                api_key=api_key,
-                tools=tool_definitions if tool_definitions else None
-            )
-            
-            message = response.choices[0].message
-            
-            # Check if tool calls are needed
-            if hasattr(message, 'tool_calls') and message.tool_calls:
-                # Execute tools
-                tool_results = []
-                for tool_call in message.tool_calls:
-                    result = await self.tool_manager.execute_tool(
-                        tool_call.function.name,
-                        tool_call.function.arguments
-                    )
-                    tool_results.append({
-                        "tool": tool_call.function.name,
-                        "result": result
-                    })
-                
-                return {
-                    "content": message.content,
-                    "tool_calls": tool_results
-                }
-            
-            return {
-                "content": message.content,
-                "tool_calls": []
-            }
-        except Exception as e:
-            return {
-                "content": f"Error: {str(e)}",
-                "tool_calls": []
-            }
+        """Execute a tool directly without LLM."""
+        result = await tool_manager.execute_tool(tool_name, arguments)
+        return result.to_dict()
+    
+    def get_available_tools(self) -> List[Dict[str, Any]]:
+        """Get list of available tools."""
+        return tool_manager.get_all_tools_info()

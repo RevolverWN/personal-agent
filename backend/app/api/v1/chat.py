@@ -30,7 +30,6 @@ async def list_conversations(
     db: AsyncSession = Depends(get_db)
 ):
     """List user's conversations."""
-    # Get conversations with message count
     result = await db.execute(
         select(
             Conversation,
@@ -68,7 +67,7 @@ async def create_conversation(
     conversation = Conversation(
         id=conversation_id,
         user_id=current_user.id,
-        title=None,  # Will be generated after first message
+        title=None,
     )
     
     db.add(conversation)
@@ -91,7 +90,6 @@ async def get_conversation_messages(
     db: AsyncSession = Depends(get_db)
 ):
     """Get messages from a conversation."""
-    # Verify conversation belongs to user
     result = await db.execute(
         select(Conversation).where(
             Conversation.id == conversation_id,
@@ -106,7 +104,6 @@ async def get_conversation_messages(
             detail="Conversation not found"
         )
     
-    # Get messages
     result = await db.execute(
         select(Message)
         .where(Message.conversation_id == conversation_id)
@@ -115,12 +112,12 @@ async def get_conversation_messages(
     messages = result.scalars().all()
     
     return [
-        ChatMessage(
-            role=msg.role,
-            content=msg.content,
-            timestamp=msg.created_at,
-            metadata=msg.metadata
-        )
+        {
+            "role": msg.role,
+            "content": msg.content,
+            "timestamp": msg.created_at.isoformat() if msg.created_at else None,
+            "metadata": msg.metadata
+        }
         for msg in messages
     ]
 
@@ -182,7 +179,8 @@ async def stream_chat_response(
         conversation_id=conversation_id,
         role="assistant",
         content=full_content,
-        model=model
+        model=model,
+        metadata={"streaming": True}
     )
     db.add(assistant_message)
     await db.commit()
@@ -259,30 +257,61 @@ async def chat(
             media_type="text/event-stream"
         )
     
-    # Non-streaming response
-    response_content = await agent_core.chat(
+    # Non-streaming response with tool support
+    response_data = await agent_core.chat(
         message=request.message,
         model=model,
         temperature=temperature,
-        history=history
+        history=history,
+        enable_tools=True
     )
     
-    # Save assistant message
+    # Save assistant message with tool call metadata
+    metadata = None
+    if response_data.get("tool_calls"):
+        metadata = {"tool_calls": response_data["tool_calls"]}
+    
     assistant_message = Message(
         conversation_id=conversation_id,
         role="assistant",
-        content=response_content,
-        model=model
+        content=response_data["content"],
+        model=model,
+        metadata=metadata
     )
     db.add(assistant_message)
     await db.commit()
     
-    return ChatResponse(
-        message=ChatMessage(
+    return {
+        "message": ChatMessage(
             role="assistant",
-            content=response_content,
+            content=response_data["content"],
             timestamp=datetime.now(timezone.utc)
         ),
-        conversation_id=conversation_id,
-        model=model
-    )
+        "conversation_id": conversation_id,
+        "model": model,
+        "tool_calls": response_data.get("tool_calls", []),
+        "usage": response_data.get("usage")
+    }
+
+
+@router.get("/tools")
+async def list_available_tools(
+    current_user: User = Depends(get_current_user)
+):
+    """List all available tools."""
+    tools = agent_core.get_available_tools()
+    return {
+        "tools": tools,
+        "count": len(tools)
+    }
+
+
+@router.post("/tools/{tool_name}/execute")
+async def execute_tool(
+    tool_name: str,
+    arguments: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Execute a tool directly."""
+    result = await agent_core.execute_tool_directly(tool_name, arguments)
+    return result

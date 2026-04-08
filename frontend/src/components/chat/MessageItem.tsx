@@ -3,14 +3,26 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { UserIcon, CpuIcon } from '@heroicons/react/24/solid'
 import { format } from 'date-fns'
+import ToolCallDisplay from './ToolCallDisplay'
+
+interface ToolCall {
+  tool: string
+  arguments: Record<string, any>
+  result: {
+    success: boolean
+    data: any
+    error?: string
+  }
+}
 
 interface MessageItemProps {
   role: 'user' | 'assistant' | 'system'
   content: string
   timestamp?: string
+  toolCalls?: ToolCall[]
 }
 
-export default function MessageItem({ role, content, timestamp }: MessageItemProps) {
+export default function MessageItem({ role, content, timestamp, toolCalls }: MessageItemProps) {
   const isUser = role === 'user'
 
   return (
@@ -30,52 +42,59 @@ export default function MessageItem({ role, content, timestamp }: MessageItemPro
         </div>
 
         {/* Message Content */}
-        <div
-          className={`rounded-2xl px-4 py-3 ${
-            isUser
-              ? 'bg-primary-600 text-white'
-              : 'bg-gray-100 text-gray-900'
-          }`}
-        >
-          {isUser ? (
-            <p className="text-sm whitespace-pre-wrap">{content}</p>
-          ) : (
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <ReactMarkdown
-                components={{
-                  code({ node, inline, className, children, ...props }: any) {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        style={oneDark}
-                        language={match[1]}
-                        PreTag="div"
-                        {...props}
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code className="bg-gray-200 text-red-600 px-1 py-0.5 rounded text-sm" {...props}>
-                        {children}
-                      </code>
-                    )
-                  },
-                }}
-              >
-                {content}
-              </ReactMarkdown>
-            </div>
-          )}
+        <div className="flex-1">
+          <div
+            className={`rounded-2xl px-4 py-3 ${
+              isUser
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-900'
+            }`}
+          >
+            {isUser ? (
+              <p className="text-sm whitespace-pre-wrap">{content}</p>
+            ) : (
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <ReactMarkdown
+                  components={{
+                    code({ node, inline, className, children, ...props }: any) {
+                      const match = /language-(\w+)/.exec(className || '')
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          style={oneDark}
+                          language={match[1]}
+                          PreTag="div"
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code className="bg-gray-200 text-red-600 px-1 py-0.5 rounded text-sm" {...props}>
+                          {children}
+                        </code>
+                      )
+                    },
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+              </div>
+            )}
 
-          {/* Timestamp */}
-          {timestamp && (
-            <p
-              className={`text-xs mt-2 ${
-                isUser ? 'text-primary-200' : 'text-gray-500'
-              }`}
-            >
-              {format(new Date(timestamp), 'h:mm a')}
-            </p>
+            {/* Timestamp */}
+            {timestamp && (
+              <p
+                className={`text-xs mt-2 ${
+                  isUser ? 'text-primary-200' : 'text-gray-500'
+                }`}
+              >
+                {format(new Date(timestamp), 'h:mm a')}
+              </p>
+            )}
+          </div>
+          
+          {/* Tool Calls Display */}
+          {!isUser && toolCalls && toolCalls.length > 0 && (
+            <ToolCallDisplay toolCalls={toolCalls} />
           )}
         </div>
       </div>

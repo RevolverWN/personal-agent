@@ -1,12 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import { api } from '../../services/api'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
+
+interface ToolCall {
+  tool: string
+  arguments: Record<string, any>
+  result: {
+    success: boolean
+    data: any
+    error?: string
+  }
+}
 
 interface Message {
   role: 'user' | 'assistant' | 'system'
   content: string
   timestamp?: string
+  tool_calls?: ToolCall[]
 }
 
 interface ChatWindowProps {
@@ -112,9 +124,12 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
           }
         }
       }
+      
+      // Reload messages to get tool calls
+      await loadMessages()
+      
     } catch (error) {
       console.error('Failed to send message:', error)
-      // Add error message
       setMessages((prev) => [
         ...prev,
         {
