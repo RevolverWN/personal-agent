@@ -167,6 +167,35 @@ class AgentInstance(Base):
     usage_count: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class ScheduledTask(Base):
+    """Scheduled task model."""
+    __tablename__ = "scheduled_tasks"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    name: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str] = mapped_column(Text, default="")
+    task_type: Mapped[str] = mapped_column(String(20), default="reminder")
+    schedule_type: Mapped[str] = mapped_column(String(20))
+    schedule_config: Mapped[dict] = mapped_column(JSON)
+    action_type: Mapped[str] = mapped_column(String(20))
+    action_params: Mapped[dict] = mapped_column(JSON, default=dict)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+    last_run_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    next_run_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    run_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_status: Mapped[str] = mapped_column(String(20), nullable=True)
+    last_error: Mapped[str] = mapped_column(Text, nullable=True)
+
+
 # Database engine and session
 engine = create_async_engine(
     settings.DATABASE_URL,
