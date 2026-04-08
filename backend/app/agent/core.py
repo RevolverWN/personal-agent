@@ -7,6 +7,7 @@ from litellm import acompletion
 
 from app.config import settings
 from app.tools.manager import tool_manager
+from app.memory.extractor import MemoryExtractor
 
 
 class AgentCore:
@@ -15,6 +16,7 @@ class AgentCore:
     def __init__(self):
         """Initialize the agent."""
         self._setup_api_keys()
+        self.memory_extractor = MemoryExtractor()
     
     def _setup_api_keys(self):
         """Setup API keys for different providers."""
@@ -52,17 +54,34 @@ class AgentCore:
         temperature: float = 0.7,
         history: List[Dict[str, str]] = None,
         system_prompt: str = None,
-        enable_tools: bool = True
+        enable_tools: bool = True,
+        user_id: int = None,
+        db_session = None
     ) -> Dict[str, Any]:
         """Send a chat message and get response with optional tool support."""
         model = model or settings.DEFAULT_MODEL
         model_name = self._get_model_name(model)
         api_key = self._get_api_key(model)
         
+        # Enhance system prompt with memories if available
+        enhanced_system_prompt = system_prompt or "You are a helpful AI assistant."
+        if user_id and db_session and settings.ENABLE_MEMORY:
+            from app.memory.retriever import MemoryRetriever
+            from app.memory.store import MemoryStore
+            
+            store = MemoryStore(db_session)
+            retriever = MemoryRetriever(store)
+            
+            enhanced_system_prompt = await retriever.get_system_prompt_with_memory(
+                user_id=user_id,
+                current_message=message,
+                base_system_prompt=system_prompt
+            )
+        
         # Build messages
         messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
+        if enhanced_system_prompt:
+            messages.append({"role": "system", "content": enhanced_system_prompt})
         
         if history:
             messages.extend(history)
@@ -101,13 +120,40 @@ class AgentCore:
                         "arguments": json.loads(tool_call.function.arguments),
                         "result": result.to_dict()
                     })
-                    
-                    # If tool execution was successful, we could continue the conversation
-                    # For now, just return the tool results
+            
+            # Extract memories from conversation if enabled
+            extracted_memories = []
+            if user_id and db_session and settings.ENABLE_MEMORY:
+                conversation_messages = history + [
+                    {"role": "user", "content": message},
+                    {"role": "assistant", "content": content}
+                ]
+                
+                from app.memory.store import MemoryStore
+                from app.memory.models import MemoryCreate
+                
+                memories = await self.memory_extractor.extract_memories(conversation_messages)
+                store = MemoryStore(db_session)
+                
+                for mem in memories:
+                    memory_data = MemoryCreate(
+                        content=mem.content,
+                        category=mem.category,
+                        importance=mem.importance
+                    )
+                    # Try to merge with existing or create new
+                    created_mem = await store.merge_similar(user_id, memory_data)
+                    if created_mem:
+                        extracted_memories.append({
+                            "id": created_mem.id,
+                            "content": created_mem.content,
+                            "category": created_mem.category
+                        })
             
             return {
                 "content": content,
                 "tool_calls": tool_calls,
+                "extracted_memories": extracted_memories,
                 "model": model,
                 "usage": response.usage.dict() if response.usage else None
             }
@@ -116,6 +162,7 @@ class AgentCore:
             return {
                 "content": f"Error: {str(e)}",
                 "tool_calls": [],
+                "extracted_memories": [],
                 "model": model,
                 "usage": None
             }

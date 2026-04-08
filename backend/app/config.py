@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     # Features
     ENABLE_WEB_SEARCH: bool = True
     ENABLE_FILE_OPERATIONS: bool = True
+    ENABLE_MEMORY: bool = True
     
     # Security
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60

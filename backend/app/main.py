@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import settings
-from app.api.v1 import auth, chat, agent, files, models as model_api
+from app.api.v1 import auth, chat, agent, files, memory, models as model_api
 from app.core.exceptions import setup_exception_handlers
 from app.models.database import init_db
 
@@ -47,6 +47,7 @@ def create_application() -> FastAPI:
     app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
     app.include_router(agent.router, prefix="/api/v1/agent", tags=["agent"])
     app.include_router(files.router, prefix="/api/v1/files", tags=["files"])
+    app.include_router(memory.router, prefix="/api/v1/memory", tags=["memory"])
     app.include_router(model_api.router, prefix="/api/v1/models", tags=["models"])
     
     @app.get("/health")

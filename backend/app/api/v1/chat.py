@@ -257,13 +257,15 @@ async def chat(
             media_type="text/event-stream"
         )
     
-    # Non-streaming response with tool support
+    # Non-streaming response with tool and memory support
     response_data = await agent_core.chat(
         message=request.message,
         model=model,
         temperature=temperature,
         history=history,
-        enable_tools=True
+        enable_tools=True,
+        user_id=current_user.id,
+        db_session=db
     )
     
     # Save assistant message with tool call metadata
@@ -290,6 +292,7 @@ async def chat(
         "conversation_id": conversation_id,
         "model": model,
         "tool_calls": response_data.get("tool_calls", []),
+        "extracted_memories": response_data.get("extracted_memories", []),
         "usage": response_data.get("usage")
     }
 

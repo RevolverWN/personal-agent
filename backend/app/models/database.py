@@ -116,6 +116,29 @@ class FileStorage(Base):
     )
 
 
+class Memory(Base):
+    """Long-term memory storage model."""
+    __tablename__ = "memories"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    content: Mapped[str] = mapped_column(Text)
+    category: Mapped[str] = mapped_column(String(20), default="general")
+    importance: Mapped[int] = mapped_column(Integer, default=3)
+    source_conversation_id: Mapped[str] = mapped_column(String(36), nullable=True)
+    access_count: Mapped[int] = mapped_column(Integer, default=0)
+    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+    last_accessed: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+
+
 # Database engine and session
 engine = create_async_engine(
     settings.DATABASE_URL,

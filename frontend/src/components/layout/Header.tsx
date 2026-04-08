@@ -4,6 +4,7 @@ import {
   HomeIcon,
   ChatBubbleLeftIcon,
   FolderIcon,
+  BrainIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
@@ -16,6 +17,7 @@ export default function Header() {
     { path: '/', label: 'Home', icon: HomeIcon },
     { path: '/chat', label: 'Chat', icon: ChatBubbleLeftIcon },
     { path: '/files', label: 'Files', icon: FolderIcon },
+    { path: '/memory', label: 'Memory', icon: BrainIcon },
     { path: '/settings', label: 'Settings', icon: Cog6ToothIcon },
   ]
 
