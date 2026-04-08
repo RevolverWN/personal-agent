@@ -139,6 +139,34 @@ class Memory(Base):
     last_accessed: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
 
+class AgentInstance(Base):
+    """Custom agent instance model."""
+    __tablename__ = "agent_instances"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    role_id: Mapped[str] = mapped_column(String(50), nullable=True)
+    name: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str] = mapped_column(Text, default="")
+    system_prompt: Mapped[str] = mapped_column(Text)
+    icon: Mapped[str] = mapped_column(String(10), default="🤖")
+    color: Mapped[str] = mapped_column(String(7), default="#3B82F6")
+    model: Mapped[str] = mapped_column(String(50), default="gpt-4o-mini")
+    temperature: Mapped[float] = mapped_column(default=0.7)
+    tools: Mapped[list] = mapped_column(JSON, default=list)
+    enable_memory: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+    usage_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
 # Database engine and session
 engine = create_async_engine(
     settings.DATABASE_URL,

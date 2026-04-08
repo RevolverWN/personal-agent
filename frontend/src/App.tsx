@@ -7,6 +7,7 @@ import Chat from './pages/Chat'
 import Settings from './pages/Settings'
 import Files from './pages/Files'
 import Memory from './pages/Memory'
+import Agents from './pages/Agents'
 import Login from './pages/Login'
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
         <Route path="/chat/:conversationId" element={<Chat />} />
         <Route path="/files" element={<Files />} />
         <Route path="/memory" element={<Memory />} />
+        <Route path="/agents" element={<Agents />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>
