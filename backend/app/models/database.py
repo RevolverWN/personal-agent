@@ -196,6 +196,33 @@ class ScheduledTask(Base):
     last_error: Mapped[str] = mapped_column(Text, nullable=True)
 
 
+class MCPServer(Base):
+    """MCP server configuration model."""
+    __tablename__ = "mcp_servers"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    name: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str] = mapped_column(Text, default="")
+    server_type: Mapped[str] = mapped_column(String(20))
+    config: Mapped[dict] = mapped_column(JSON)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    status: Mapped[str] = mapped_column(String(20), default="disconnected")
+    icon: Mapped[str] = mapped_column(String(10), default="🔌")
+    tools: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+    last_connected_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    last_error: Mapped[str] = mapped_column(Text, nullable=True)
+    usage_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
 # Database engine and session
 engine = create_async_engine(
     settings.DATABASE_URL,
