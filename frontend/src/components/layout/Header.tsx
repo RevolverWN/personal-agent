@@ -6,6 +6,7 @@ import {
   FolderIcon,
   BrainIcon,
   UsersIcon,
+  BoltIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
@@ -20,6 +21,7 @@ export default function Header() {
     { path: '/files', label: 'Files', icon: FolderIcon },
     { path: '/memory', label: 'Memory', icon: BrainIcon },
     { path: '/agents', label: 'Agents', icon: UsersIcon },
+    { path: '/skills', label: 'Skills', icon: BoltIcon },
     { path: '/settings', label: 'Settings', icon: Cog6ToothIcon },
   ]
 

@@ -8,6 +8,7 @@ import Settings from './pages/Settings'
 import Files from './pages/Files'
 import Memory from './pages/Memory'
 import Agents from './pages/Agents'
+import Skills from './pages/Skills'
 import Login from './pages/Login'
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
         <Route path="/files" element={<Files />} />
         <Route path="/memory" element={<Memory />} />
         <Route path="/agents" element={<Agents />} />
+        <Route path="/skills" element={<Skills />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>
