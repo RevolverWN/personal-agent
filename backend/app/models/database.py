@@ -71,7 +71,7 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text)
     model: Mapped[str] = mapped_column(String(50), nullable=True)
     tokens_used: Mapped[int] = mapped_column(Integer, nullable=True)
-    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    meta_data: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
@@ -127,7 +127,7 @@ class Memory(Base):
     importance: Mapped[int] = mapped_column(Integer, default=3)
     source_conversation_id: Mapped[str] = mapped_column(String(36), nullable=True)
     access_count: Mapped[int] = mapped_column(Integer, default=0)
-    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    meta_data: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )

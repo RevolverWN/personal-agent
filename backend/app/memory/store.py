@@ -32,7 +32,7 @@ class MemoryStore:
             created_at=now,
             updated_at=now,
             access_count=0,
-            metadata=memory_data.metadata
+            meta_data=memory_data.meta_data
         )
         
         self.db.add(db_memory)
@@ -105,8 +105,8 @@ class MemoryStore:
             db_memory.category = update_data.category
         if update_data.importance is not None:
             db_memory.importance = update_data.importance
-        if update_data.metadata is not None:
-            db_memory.metadata = update_data.metadata
+        if update_data.meta_data is not None:
+            db_memory.meta_data = update_data.meta_data
         
         db_memory.updated_at = datetime.utcnow()
         

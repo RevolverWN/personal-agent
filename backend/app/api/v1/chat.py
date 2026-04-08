@@ -116,7 +116,7 @@ async def get_conversation_messages(
             "role": msg.role,
             "content": msg.content,
             "timestamp": msg.created_at.isoformat() if msg.created_at else None,
-            "metadata": msg.metadata
+            "metadata": msg.meta_data
         }
         for msg in messages
     ]
