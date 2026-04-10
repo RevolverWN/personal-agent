@@ -1,13 +1,13 @@
 """Scheduler data models."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class TaskType(str, Enum):
+class TaskType(StrEnum):
     """Types of scheduled tasks."""
 
     REMINDER = "reminder"
@@ -17,7 +17,7 @@ class TaskType(str, Enum):
     AGENT_TASK = "agent_task"
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     """Task execution status."""
 
     PENDING = "pending"

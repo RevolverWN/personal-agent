@@ -1,13 +1,13 @@
 """MCP data models."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class MCPServerStatus(str, Enum):
+class MCPServerStatus(StrEnum):
     """MCP server connection status."""
 
     DISCONNECTED = "disconnected"
@@ -16,7 +16,7 @@ class MCPServerStatus(str, Enum):
     ERROR = "error"
 
 
-class MCPServerType(str, Enum):
+class MCPServerType(StrEnum):
     """MCP server type."""
 
     STDIO = "stdio"  # Local process
