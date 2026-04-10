@@ -6,9 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import settings
-from app.api.v1 import auth, chat, agent as agent_config, files, memory, agents, skills, mcp, models as model_api
+from app.api.v1 import auth, chat, agent as agent_config, files, memory, agents, skills, mcp, models as model_api, scheduler
 from app.core.exceptions import setup_exception_handlers
 from app.models.database import init_db
+from app.scheduler.engine import scheduler_engine
+from app.scheduler.heartbeat import heartbeat_service
 from app.websocket import router as websocket_router
 
 
@@ -17,8 +19,12 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     await init_db()
+    await scheduler_engine.start()
+    await heartbeat_service.start()
     yield
     # Shutdown
+    await heartbeat_service.stop()
+    await scheduler_engine.stop()
 
 
 def create_application() -> FastAPI:
@@ -53,6 +59,7 @@ def create_application() -> FastAPI:
     app.include_router(skills.router, prefix="/api/v1/skills", tags=["skills"])
     app.include_router(mcp.router, prefix="/api/v1/mcp", tags=["mcp"])
     app.include_router(model_api.router, prefix="/api/v1/models", tags=["models"])
+    app.include_router(scheduler.router, prefix="/api/v1/scheduler", tags=["scheduler"])
     app.include_router(websocket_router)
     
     @app.get("/health")

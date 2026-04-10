@@ -32,6 +32,7 @@ function App() {
         <Route path="/memory" element={<Memory />} />
         <Route path="/agents" element={<Agents />} />
         <Route path="/skills" element={<Skills />} />
+        <Route path="/scheduler" element={<Scheduler />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>

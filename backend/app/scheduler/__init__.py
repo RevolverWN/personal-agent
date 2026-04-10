@@ -1,6 +1,23 @@
-"""Task scheduler system for Personal Agent."""
+"""Task scheduler system — in-memory MVP with APScheduler."""
 
-from app.scheduler.manager import TaskScheduler
-from app.scheduler.models import ScheduledTask, TaskType, TaskStatus
+from app.scheduler.engine import scheduler_engine
+from app.scheduler.heartbeat import heartbeat_service
+from app.scheduler.types import (
+    RunStatus,
+    ScheduleCreate,
+    ScheduleKind,
+    TaskCreate,
+    TaskResponse,
+    TaskRun,
+)
 
-__all__ = ["TaskScheduler", "ScheduledTask", "TaskType", "TaskStatus"]
+__all__ = [
+    "scheduler_engine",
+    "heartbeat_service",
+    "RunStatus",
+    "ScheduleCreate",
+    "ScheduleKind",
+    "TaskCreate",
+    "TaskResponse",
+    "TaskRun",
+]
