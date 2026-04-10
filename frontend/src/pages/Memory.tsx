@@ -55,7 +55,7 @@ export default function Memory() {
     try {
       const params = new URLSearchParams()
       if (selectedCategory) params.append('category', selectedCategory)
-      
+
       const response = await api.get(`/memory?${params}`)
       setMemories(response.data)
     } catch (error) {
@@ -79,7 +79,7 @@ export default function Memory() {
       loadMemories()
       return
     }
-    
+
     try {
       const response = await api.get(`/memory/search?query=${encodeURIComponent(searchQuery)}`)
       setMemories(response.data.memories)
@@ -102,7 +102,7 @@ export default function Memory() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this memory?')) return
-    
+
     try {
       await api.delete(`/memory/${id}`)
       loadMemories()
@@ -114,7 +114,7 @@ export default function Memory() {
 
   const handleClearAll = async () => {
     if (!confirm('Are you sure you want to delete ALL memories? This cannot be undone.')) return
-    
+
     try {
       await api.delete('/memory')
       loadMemories()
@@ -161,7 +161,7 @@ export default function Memory() {
               </div>
             </div>
           </div>
-          
+
           <div className="card">
             <div className="flex items-center">
               <ClockIcon className="w-8 h-8 text-green-600" />
@@ -171,7 +171,7 @@ export default function Memory() {
               </div>
             </div>
           </div>
-          
+
           {Object.entries(stats.by_category).slice(0, 2).map(([cat, count]) => (
             <div key={cat} className="card">
               <div className="flex items-center">
@@ -202,7 +202,7 @@ export default function Memory() {
               />
             </div>
           </div>
-          
+
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -213,7 +213,7 @@ export default function Memory() {
               <option key={cat.value} value={cat.value}>{cat.label}</option>
             ))}
           </select>
-          
+
           <button onClick={handleSearch} className="btn-primary">
             Search
           </button>
@@ -251,15 +251,15 @@ export default function Memory() {
                       ))}
                     </div>
                   </div>
-                  
+
                   <p className="text-gray-900 mb-2">{memory.content}</p>
-                  
+
                   <div className="flex items-center text-sm text-gray-500 gap-4">
                     <span>Added {format(new Date(memory.created_at), 'MMM d, yyyy')}</span>
                     <span>Accessed {memory.access_count} times</span>
                   </div>
                 </div>
-                
+
                 <button
                   onClick={() => handleDelete(memory.id)}
                   className="text-gray-400 hover:text-red-600 p-2"
@@ -289,7 +289,7 @@ export default function Memory() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-lg">
             <h2 className="text-xl font-bold mb-4">Add Memory</h2>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -303,7 +303,7 @@ export default function Memory() {
                   placeholder="Something to remember..."
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Category
@@ -318,7 +318,7 @@ export default function Memory() {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Importance: {newMemory.importance}
@@ -333,7 +333,7 @@ export default function Memory() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowAddModal(false)}

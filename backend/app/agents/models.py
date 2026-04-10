@@ -1,12 +1,14 @@
 """Agent data models."""
 
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
 class AgentRole(BaseModel):
     """Predefined agent role/persona."""
+
     id: str
     name: str
     description: str
@@ -15,16 +17,17 @@ class AgentRole(BaseModel):
     color: str = "#3B82F6"
     default_model: str = "gpt-4o-mini"
     temperature: float = 0.7
-    tools: List[str] = Field(default_factory=list)
+    tools: list[str] = Field(default_factory=list)
     is_builtin: bool = True
     created_at: datetime
 
 
 class AgentInstance(BaseModel):
     """User's configured agent instance."""
+
     id: str
     user_id: int
-    role_id: Optional[str] = None
+    role_id: str | None = None
     name: str
     description: str
     system_prompt: str
@@ -32,20 +35,21 @@ class AgentInstance(BaseModel):
     color: str = "#3B82F6"
     model: str
     temperature: float = 0.7
-    tools: List[str] = Field(default_factory=list)
+    tools: list[str] = Field(default_factory=list)
     enable_memory: bool = True
     is_active: bool = True
     created_at: datetime
     updated_at: datetime
     usage_count: int = 0
-    
+
     class Config:
         from_attributes = True
 
 
 class AgentCreate(BaseModel):
     """Create a new agent."""
-    role_id: Optional[str] = None
+
+    role_id: str | None = None
     name: str = Field(..., min_length=1, max_length=50)
     description: str = Field(default="", max_length=200)
     system_prompt: str = Field(..., min_length=1)
@@ -53,50 +57,54 @@ class AgentCreate(BaseModel):
     color: str = "#3B82F6"
     model: str = "gpt-4o-mini"
     temperature: float = Field(default=0.7, ge=0, le=2)
-    tools: List[str] = Field(default_factory=list)
+    tools: list[str] = Field(default_factory=list)
     enable_memory: bool = True
 
 
 class AgentUpdate(BaseModel):
     """Update an existing agent."""
-    name: Optional[str] = Field(None, min_length=1, max_length=50)
-    description: Optional[str] = Field(None, max_length=200)
-    system_prompt: Optional[str] = Field(None, min_length=1)
-    icon: Optional[str] = None
-    color: Optional[str] = None
-    model: Optional[str] = None
-    temperature: Optional[float] = Field(None, ge=0, le=2)
-    tools: Optional[List[str]] = None
-    enable_memory: Optional[bool] = None
-    is_active: Optional[bool] = None
+
+    name: str | None = Field(None, min_length=1, max_length=50)
+    description: str | None = Field(None, max_length=200)
+    system_prompt: str | None = Field(None, min_length=1)
+    icon: str | None = None
+    color: str | None = None
+    model: str | None = None
+    temperature: float | None = Field(None, ge=0, le=2)
+    tools: list[str] | None = None
+    enable_memory: bool | None = None
+    is_active: bool | None = None
 
 
 class AgentCollaborationRequest(BaseModel):
     """Request for multi-agent collaboration."""
+
     message: str
-    agent_ids: List[str]
+    agent_ids: list[str]
     mode: str = "sequential"  # sequential, parallel, debate
-    context: Optional[Dict[str, Any]] = None
+    context: dict[str, Any] | None = None
 
 
 class AgentCollaborationResponse(BaseModel):
     """Response from multi-agent collaboration."""
-    responses: List[Dict[str, Any]]
-    synthesis: Optional[str] = None
+
+    responses: list[dict[str, Any]]
+    synthesis: str | None = None
     collaboration_id: str
 
 
 class AgentTask(BaseModel):
     """Task assigned to an agent."""
+
     id: str
     agent_id: str
     task_type: str
     description: str
     status: str = "pending"  # pending, in_progress, completed, failed
-    input_data: Optional[Dict[str, Any]] = None
-    output_data: Optional[Dict[str, Any]] = None
+    input_data: dict[str, Any] | None = None
+    output_data: dict[str, Any] | None = None
     created_at: datetime
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
 
 # Built-in agent roles
@@ -112,13 +120,13 @@ BUILTIN_ROLES = [
         temperature=0.7,
         tools=["web_search", "web_fetch", "current_time", "calculate"],
         is_builtin=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     ),
     AgentRole(
         id="code_expert",
         name="代码专家",
         description="专业的编程助手，擅长代码编写、调试和代码审查",
-        system_prompt="""You are an expert programmer and software engineer. 
+        system_prompt="""You are an expert programmer and software engineer.
 You excel at writing clean, efficient, and well-documented code.
 When helping with code:
 1. Write code that follows best practices
@@ -132,7 +140,7 @@ When helping with code:
         temperature=0.3,
         tools=["execute_python", "calculate", "read_file", "web_search"],
         is_builtin=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     ),
     AgentRole(
         id="creative_writer",
@@ -152,7 +160,7 @@ Always adapt your tone and style to match the user's needs and target audience."
         temperature=0.9,
         tools=["web_search", "current_time"],
         is_builtin=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     ),
     AgentRole(
         id="data_analyst",
@@ -172,7 +180,7 @@ Always explain your analysis in clear, understandable terms.""",
         temperature=0.4,
         tools=["execute_python", "calculate", "read_file", "list_files"],
         is_builtin=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     ),
     AgentRole(
         id="researcher",
@@ -192,7 +200,7 @@ Always prioritize accuracy and completeness.""",
         temperature=0.5,
         tools=["web_search", "web_fetch", "current_time", "date_calculator"],
         is_builtin=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     ),
     AgentRole(
         id="teacher",
@@ -213,7 +221,7 @@ Make learning engaging and accessible.""",
         temperature=0.6,
         tools=["web_search", "calculate", "execute_python"],
         is_builtin=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     ),
     AgentRole(
         id="debugger",
@@ -234,6 +242,6 @@ Be systematic and thorough in your analysis.""",
         temperature=0.3,
         tools=["execute_python", "read_file", "list_files", "web_search"],
         is_builtin=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     ),
 ]

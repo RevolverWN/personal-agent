@@ -1,12 +1,15 @@
 """Main application entry point."""
 
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
+from app.api.v1 import agent as agent_config
+from app.api.v1 import agents, auth, chat, files, mcp, memory, skills
+from app.api.v1 import models as model_api
 from app.config import settings
-from app.api.v1 import auth, chat, agent as agent_config, files, memory, agents, skills, mcp, models as model_api
 from app.core.exceptions import setup_exception_handlers
 from app.models.database import init_db
 from app.websocket import router as websocket_router
@@ -30,7 +33,7 @@ def create_application() -> FastAPI:
         debug=settings.DEBUG,
         lifespan=lifespan,
     )
-    
+
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -39,10 +42,10 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Setup exception handlers
     setup_exception_handlers(app)
-    
+
     # Include routers
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
     app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
@@ -54,7 +57,7 @@ def create_application() -> FastAPI:
     app.include_router(mcp.router, prefix="/api/v1/mcp", tags=["mcp"])
     app.include_router(model_api.router, prefix="/api/v1/models", tags=["models"])
     app.include_router(websocket_router)
-    
+
     @app.get("/health")
     async def health_check():
         """Health check endpoint."""
@@ -63,7 +66,7 @@ def create_application() -> FastAPI:
             "version": settings.APP_VERSION,
             "name": settings.APP_NAME,
         }
-    
+
     @app.get("/")
     async def root():
         """Root endpoint."""
@@ -72,7 +75,7 @@ def create_application() -> FastAPI:
             "version": settings.APP_VERSION,
             "docs_url": "/docs",
         }
-    
+
     return app
 
 

@@ -25,13 +25,13 @@ interface MessageItemProps {
   model?: string
 }
 
-export default function MessageItem({ 
-  role, 
-  content, 
-  timestamp, 
-  toolCalls, 
+export default function MessageItem({
+  role,
+  content,
+  timestamp,
+  toolCalls,
   isStreaming,
-  model 
+  model
 }: MessageItemProps) {
   const isUser = role === 'user'
 
@@ -111,7 +111,7 @@ export default function MessageItem({
               )}
             </div>
           </div>
-          
+
           {/* Tool Calls Display */}
           {!isUser && toolCalls && toolCalls.length > 0 && (
             <ToolCallDisplay toolCalls={toolCalls} />

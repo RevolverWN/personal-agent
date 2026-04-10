@@ -12,7 +12,7 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ conversationId }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  
+
   const {
     messages,
     isStreaming,
@@ -40,22 +40,22 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
       case 'connected':
         console.log('WebSocket connected:', wsMessage.client_id)
         break
-        
+
       case 'ack':
         // Server acknowledged our message
         console.log('Message acknowledged:', wsMessage.message_id)
         break
-        
+
       case 'stream_chunk':
         // Append streaming content
         appendToStreamingMessage(wsMessage.content as string)
         break
-        
+
       case 'stream_end':
         // Streaming finished
         stopStreaming()
         break
-        
+
       case 'response':
         // Non-streaming response
         addMessage({
@@ -67,7 +67,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
           tokensUsed: wsMessage.tokens_used as number,
         })
         break
-        
+
       case 'error':
         console.error('WebSocket error:', wsMessage.message)
         stopStreaming()
@@ -152,17 +152,17 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
-        <MessageList 
-          messages={messages} 
-          streamingMessageId={streamingMessageId} 
+        <MessageList
+          messages={messages}
+          streamingMessageId={streamingMessageId}
         />
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
       <div className="border-t border-gray-200 p-4 bg-white">
-        <MessageInput 
-          onSend={handleSendMessage} 
+        <MessageInput
+          onSend={handleSendMessage}
           isLoading={isStreaming}
           disabled={!isConnected}
           placeholder={isConnected ? 'Type a message...' : 'Waiting for connection...'}

@@ -2,10 +2,10 @@
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
-from app.main import app
 from app.core.security import create_access_token
+from app.main import app
 
 
 @pytest_asyncio.fixture

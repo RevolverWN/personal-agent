@@ -26,7 +26,7 @@ export default function ToolCallDisplay({ toolCalls }: ToolCallDisplayProps) {
         <WrenchIcon className="w-3 h-3 mr-1" />
         Used {toolCalls.length} tool{toolCalls.length > 1 ? 's' : ''}
       </p>
-      
+
       {toolCalls.map((toolCall, index) => (
         <div
           key={index}
@@ -63,7 +63,7 @@ export default function ToolCallDisplay({ toolCalls }: ToolCallDisplayProps) {
               <ChevronDownIcon className="w-4 h-4 text-gray-500" />
             )}
           </button>
-          
+
           {expandedTool === `${index}` && (
             <div className="px-3 pb-3 border-t border-gray-200">
               {/* Arguments */}
@@ -73,7 +73,7 @@ export default function ToolCallDisplay({ toolCalls }: ToolCallDisplayProps) {
                   {JSON.stringify(toolCall.arguments, null, 2)}
                 </pre>
               </div>
-              
+
               {/* Result */}
               <div className="mt-2">
                 <p className="text-xs font-medium text-gray-600 mb-1">Result:</p>

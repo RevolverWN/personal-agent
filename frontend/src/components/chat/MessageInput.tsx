@@ -9,9 +9,9 @@ interface MessageInputProps {
   placeholder?: string
 }
 
-export default function MessageInput({ 
-  onSend, 
-  isLoading, 
+export default function MessageInput({
+  onSend,
+  isLoading,
   disabled = false,
   placeholder = 'Type your message... (Shift+Enter for new line)'
 }: MessageInputProps) {
@@ -36,7 +36,7 @@ export default function MessageInput({
 
     // Include file content in message if present
     let finalMessage = message.trim()
-    
+
     if (files.length > 0) {
       const fileDescriptions = files.map(f => {
         if (f.content) {
@@ -44,8 +44,8 @@ export default function MessageInput({
         }
         return `[File: ${f.name} (${(f.size / 1024).toFixed(1)} KB)]`
       }).join('\n\n')
-      
-      finalMessage = finalMessage 
+
+      finalMessage = finalMessage
         ? `${finalMessage}\n\n${fileDescriptions}`
         : fileDescriptions
     }
@@ -91,8 +91,8 @@ export default function MessageInput({
           disabled={isLoading || disabled}
           className={`
             p-3 rounded-xl transition-colors
-            ${showFileUpload 
-              ? 'bg-primary-100 text-primary-600' 
+            ${showFileUpload
+              ? 'bg-primary-100 text-primary-600'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }
             disabled:opacity-50 disabled:cursor-not-allowed

@@ -83,12 +83,12 @@ export default function Skills() {
                 <p className="text-sm text-gray-600">{selectedSkill.description}</p>
               </div>
             </div>
-            
+
             <div className="border-t pt-4">
               <p className="text-sm text-gray-500 mb-3">
                 This skill will be automatically used by the AI when relevant.
               </p>
-              
+
               {actionResult && (
                 <div className="mt-4 p-3 bg-gray-50 rounded">
                   <p className="text-sm font-medium">Last Result:</p>
@@ -98,7 +98,7 @@ export default function Skills() {
                 </div>
               )}
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setSelectedSkill(null)}
