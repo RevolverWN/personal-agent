@@ -50,6 +50,9 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "python-multipart>=0.0.20",
     
+    # Scheduling
+    "apscheduler>=3.10.0",
+
     # Tools
     "duckduckgo-search>=7.2.0",
     "beautifulsoup4>=4.12.0",
