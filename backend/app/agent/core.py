@@ -8,6 +8,7 @@ from litellm import acompletion
 from app.config import settings
 from app.tools.manager import tool_manager
 from app.memory.extractor import MemoryExtractor
+from app.services.token_usage.interceptor import TokenUsageInterceptor
 
 
 class AgentCore:
@@ -17,6 +18,7 @@ class AgentCore:
         """Initialize the agent."""
         self._setup_api_keys()
         self.memory_extractor = MemoryExtractor()
+        self.usage_interceptor = TokenUsageInterceptor()
     
     def _setup_api_keys(self):
         """Setup API keys for different providers."""
@@ -150,6 +152,21 @@ class AgentCore:
                             "category": created_mem.category
                         })
             
+            # Extract and record token usage
+            usage_data = self.usage_interceptor.extract_usage(response, model=model)
+            if usage_data and user_id and db_session:
+                from app.services.token_usage.service import TokenUsageService
+                usage_svc = TokenUsageService(db_session)
+                try:
+                    await usage_svc.record(
+                        model=usage_data["model"],
+                        prompt_tokens=usage_data["prompt_tokens"],
+                        completion_tokens=usage_data["completion_tokens"],
+                        user_id=user_id,
+                    )
+                except Exception:
+                    pass  # non-critical — don't fail the chat response
+
             return {
                 "content": content,
                 "tool_calls": tool_calls,

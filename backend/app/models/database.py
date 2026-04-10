@@ -196,6 +196,24 @@ class ScheduledTask(Base):
     last_error: Mapped[str] = mapped_column(Text, nullable=True)
 
 
+class TokenUsage(Base):
+    """Token usage tracking model."""
+    __tablename__ = "token_usage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
+    model: Mapped[str] = mapped_column(String(100))
+    provider: Mapped[str] = mapped_column(String(50), default="")
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    session_id: Mapped[str] = mapped_column(String(36), nullable=True)
+    cost: Mapped[float] = mapped_column(default=0.0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
+
+
 class MCPServer(Base):
     """MCP server configuration model."""
     __tablename__ = "mcp_servers"
