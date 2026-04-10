@@ -1,10 +1,9 @@
 """Model management API routes."""
 
-from fastapi import APIRouter, Depends
-from typing import List
+from fastapi import APIRouter
 
-from app.models.schemas import ModelInfo, ModelListResponse
 from app.config import settings
+from app.models.schemas import ModelInfo, ModelListResponse
 
 router = APIRouter()
 
@@ -80,13 +79,10 @@ AVAILABLE_MODELS = [
 @router.get("", response_model=ModelListResponse)
 async def list_models():
     """List all available models."""
-    return ModelListResponse(
-        models=AVAILABLE_MODELS,
-        default_model=settings.DEFAULT_MODEL
-    )
+    return ModelListResponse(models=AVAILABLE_MODELS, default_model=settings.DEFAULT_MODEL)
 
 
-@router.get("/supported", response_model=List[str])
+@router.get("/supported", response_model=list[str])
 async def list_supported_providers():
     """List all supported model providers."""
     providers = list(set(model.provider for model in AVAILABLE_MODELS))

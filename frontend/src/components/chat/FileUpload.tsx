@@ -92,7 +92,7 @@ export default function FileUpload({
       }
 
       // Read text files
-      if (file.type.startsWith('text/') || 
+      if (file.type.startsWith('text/') ||
           file.name.match(/\.(js|ts|jsx|tsx|py|java|cpp|c|h|go|rs|md|txt|csv|yaml|yml|xml|html|css|sql|json)$/)) {
         try {
           const text = await file.text()
@@ -163,8 +163,8 @@ export default function FileUpload({
         className={`
           relative border-2 border-dashed rounded-lg p-4 cursor-pointer
           transition-colors duration-200
-          ${isDragging 
-            ? 'border-primary-500 bg-primary-50' 
+          ${isDragging
+            ? 'border-primary-500 bg-primary-50'
             : 'border-gray-300 hover:border-gray-400'
           }
         `}
@@ -177,14 +177,14 @@ export default function FileUpload({
           onChange={handleInputChange}
           className="hidden"
         />
-        
+
         <div className="flex items-center justify-center space-x-2 text-gray-600">
           <PaperClipIcon className="w-5 h-5" />
           <span className="text-sm">
             {isDragging ? 'Drop files here' : 'Click or drag files to upload'}
           </span>
         </div>
-        
+
         <p className="text-xs text-gray-400 text-center mt-1">
           Max {maxFiles} files, {maxSizeMB}MB each
         </p>
@@ -217,7 +217,7 @@ export default function FileUpload({
                   </p>
                 </div>
               </div>
-              
+
               <button
                 onClick={() => removeFile(file.id)}
                 className="p-1 hover:bg-gray-200 rounded text-gray-500"

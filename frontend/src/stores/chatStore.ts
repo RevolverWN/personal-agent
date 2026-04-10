@@ -34,18 +34,18 @@ interface ChatState {
   isLoading: boolean
   isStreaming: boolean
   streamingMessageId: string | null
-  
+
   // Conversation list
   conversations: Conversation[]
   conversationsLoading: boolean
-  
+
   // Actions
   setCurrentConversation: (id: string | null) => void
   loadConversations: () => Promise<void>
   loadMessages: (conversationId: string) => Promise<void>
   createConversation: () => Promise<string | null>
   deleteConversation: (id: string) => Promise<void>
-  
+
   // Message actions
   addMessage: (message: Message) => void
   updateMessage: (id: string, updates: Partial<Message>) => void
@@ -54,7 +54,7 @@ interface ChatState {
   startStreaming: (messageId: string) => void
   stopStreaming: () => void
   clearMessages: () => void
-  
+
   // UI state
   setLoading: (loading: boolean) => void
 }

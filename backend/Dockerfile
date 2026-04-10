@@ -16,7 +16,6 @@ RUN pip install --no-cache-dir -e "."
 
 # Copy application code
 COPY app/ ./app/
-COPY alembic/ ./alembic/
 COPY alembic.ini .
 
 # Create data directory

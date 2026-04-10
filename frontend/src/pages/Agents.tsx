@@ -116,7 +116,7 @@ export default function Agents() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this agent?')) return
-    
+
     try {
       await api.delete(`/agents/${id}`)
       setAgents(agents.filter(a => a.id !== id))
@@ -130,7 +130,7 @@ export default function Agents() {
       alert('Please select at least 2 agents')
       return
     }
-    
+
     try {
       const response = await api.post('/agents/collaborate', {
         message: collaboration.message,
@@ -264,7 +264,7 @@ export default function Agents() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Create Custom Agent</h2>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -276,7 +276,7 @@ export default function Agents() {
                   placeholder="e.g., Code Reviewer"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <input
@@ -287,7 +287,7 @@ export default function Agents() {
                   placeholder="What does this agent do?"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">System Prompt</label>
                 <textarea
@@ -298,7 +298,7 @@ export default function Agents() {
                   placeholder="Instructions for the agent..."
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
                 <select
@@ -311,7 +311,7 @@ export default function Agents() {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Temperature: {newAgent.temperature}
@@ -327,7 +327,7 @@ export default function Agents() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary">
                 Cancel
@@ -349,7 +349,7 @@ export default function Agents() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Multi-Agent Collaboration</h2>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Task</label>
@@ -361,7 +361,7 @@ export default function Agents() {
                   placeholder="Describe the task or question..."
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Mode</label>
                 <select
@@ -374,7 +374,7 @@ export default function Agents() {
                   <option value="debate">Debate - Agents discuss and challenge each other</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select Agents</label>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -405,7 +405,7 @@ export default function Agents() {
                 </div>
               </div>
             </div>
-            
+
             {collaborationResult && (
               <div className="mt-6 border-t pt-4">
                 <h3 className="font-semibold mb-3">Results</h3>
@@ -423,7 +423,7 @@ export default function Agents() {
                 )}
               </div>
             )}
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setShowCollaborateModal(false)} className="btn-secondary">
                 Close

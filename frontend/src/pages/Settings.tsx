@@ -45,10 +45,10 @@ export default function Settings() {
 
   const handleSave = async () => {
     if (!config) return
-    
+
     setIsSaving(true)
     setMessage('')
-    
+
     try {
       await api.put('/agent/config', config)
       setMessage('Settings saved successfully')

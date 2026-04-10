@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
 
           // Get user info
           const userResponse = await api.get('/auth/me')
-          
+
           set({
             user: userResponse.data,
             token: access_token,
