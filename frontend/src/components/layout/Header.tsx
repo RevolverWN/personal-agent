@@ -7,6 +7,7 @@ import {
   LightBulbIcon,
   UsersIcon,
   BoltIcon,
+  ChartBarIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
@@ -22,6 +23,7 @@ export default function Header() {
     { path: '/memory', label: 'Memory', icon: LightBulbIcon },
     { path: '/agents', label: 'Agents', icon: UsersIcon },
     { path: '/skills', label: 'Skills', icon: BoltIcon },
+    { path: '/token-usage', label: 'Usage', icon: ChartBarIcon },
     { path: '/settings', label: 'Settings', icon: Cog6ToothIcon },
   ]
 

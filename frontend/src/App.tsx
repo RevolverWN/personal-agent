@@ -9,6 +9,7 @@ import Files from './pages/Files'
 import Memory from './pages/Memory'
 import Agents from './pages/Agents'
 import Skills from './pages/Skills'
+import TokenUsage from './pages/TokenUsage'
 import Login from './pages/Login'
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
         <Route path="/memory" element={<Memory />} />
         <Route path="/agents" element={<Agents />} />
         <Route path="/skills" element={<Skills />} />
+        <Route path="/token-usage" element={<TokenUsage />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>
