@@ -12,6 +12,8 @@ services:
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///app/data/personal_agent.db
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DEBUG=${DEBUG:-false}
+      - CORS_ORIGINS=http://localhost,http://localhost:80,http://localhost:5173
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
@@ -19,19 +21,26 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
     volumes:
       - backend-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - personal-agent-network
 
   frontend:
     build:
-      context: ../frontend
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
     container_name: personal-agent-frontend
     restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - personal-agent-network
 
